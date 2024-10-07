@@ -1,0 +1,21 @@
+{
+  "name": "avr-llm-openai",
+  "version": "1.0.0",
+  "author": "Giuseppe Careri",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node .",
+    "start:dev": "nodemon --inspect ./index.js",
+    "dc:build": "docker build --platform=linux/amd64 -t agentvoiceresponse/avr-llm-openai:latest -t agentvoiceresponse/avr-llm-openai:${npm_package_version} .",
+    "dc:push": "docker push agentvoiceresponse/avr-llm-openai:latest && docker push agentvoiceresponse/avr-llm-openai:${npm_package_version}"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
