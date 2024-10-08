@@ -3,7 +3,6 @@
  * This file is the main entrypoint for the application.
  * @author  Giuseppe Careri
  * @see https://www.gcareri.com
- * @copyright Copyright (c) 2024 Giuseppe Careri
  */
 const express = require('express');
 const axios = require('axios');
