@@ -1,6 +1,6 @@
 {
   "name": "avr-llm-openai",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "Giuseppe Careri",
   "description": "",
   "main": "index.js",

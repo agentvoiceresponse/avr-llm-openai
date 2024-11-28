@@ -69,7 +69,7 @@ const handlePromptStream = async (req, res) => {
                         const content = parsed.choices[0]?.delta?.content || '';
                         if (content) {
                             console.log('Sending chunk to client:', content);
-                            res.write(content);
+                            res.write(JSON.stringify({ type: 'text', content }));
                         }
                     } catch (error) {
                         console.log(data);
