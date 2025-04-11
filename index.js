@@ -85,7 +85,6 @@ const handlePromptStream = async (req, res) => {
     });
 
     // Variables to track content and function calls
-    let content = "";
     let functionName = "";
     let functionArgs = "";
 
@@ -94,8 +93,8 @@ const handlePromptStream = async (req, res) => {
       for (const choice of chunk.choices) {
         // Handle completion of the response
         if (choice.finish_reason === "stop") {
-          console.log(`>> AI response: ${content}`);
-          res.write(JSON.stringify({ type: 'text', content: content }));
+            console.log("Ending response stream");
+            res.end();
         }
 
         // Handle tool calls from the AI
@@ -133,7 +132,7 @@ const handlePromptStream = async (req, res) => {
         if (choice.delta) {
           // Accumulate text content
           if (choice.delta.content) {
-            content += choice.delta.content;
+            res.write(JSON.stringify({ type: 'text', content: choice.delta.content }));
           }
 
           // Process tool calls
@@ -151,6 +150,7 @@ const handlePromptStream = async (req, res) => {
     }
 
     // End the response stream
+    console.log("Ending response stream");
     res.end();
   } catch (error) {
     // Handle errors during OpenAI API calls
