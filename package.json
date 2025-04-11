@@ -1,8 +1,8 @@
 {
   "name": "avr-llm-openai",
-  "version": "1.0.2",
-  "author": "Giuseppe Careri",
-  "description": "",
+  "version": "1.1.0",
+  "author": "Agent Voice Response <info@agentvoiceresponse.com>",
+  "description": "OpenAI LLM service for Agent Voice Response",
   "main": "index.js",
   "scripts": {
     "start": "node .",
@@ -11,11 +11,19 @@
     "dc:push": "docker push agentvoiceresponse/avr-llm-openai:latest && docker push agentvoiceresponse/avr-llm-openai:${npm_package_version}"
   },
   "dependencies": {
-    "axios": "^1.7.7",
-    "dotenv": "^16.4.5",
-    "express": "^4.21.0"
+    "axios": "^1.8.4",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "openai": "^4.93.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.7"
-  }
+    "nodemon": "^3.1.9"
+  },
+  "contributors": [
+    {
+      "name": "Giuseppe Careri",
+      "email": "info@gcareri.com",
+      "url": "https://github.com/gcareri"
+    }
+  ]
 }

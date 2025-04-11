@@ -1,17 +1,40 @@
 /**
  * index.js
  * This file is the main entrypoint for the application.
- * @author  Giuseppe Careri
- * @see https://www.gcareri.com
+ * It handles communication with the OpenAI API and processes responses.
+ * @author  AgentVoiceResponse
+ * @see https://www.agentvoiceresponse.com
  */
-const express = require('express');
-const axios = require('axios');
+const express = require("express");
+const { OpenAI } = require("openai");
+const { loadTools, getToolHandler } = require("./loadTools");
 
-require('dotenv').config();
+// Load environment variables from .env file
+require("dotenv").config();
 
+// Initialize Express application
 const app = express();
 
+// Middleware to parse JSON request bodies
 app.use(express.json());
+
+let type = 'openai';
+// Configure OpenAI client with API key and optional base URL
+const openaiConfig = {
+  apiKey: process.env.OPENAI_API_KEY,
+};
+
+// Add custom base URL if provided in environment variables
+if (process.env.OPENAI_BASEURL) {
+  openaiConfig.baseURL = process.env.OPENAI_BASEURL;
+  console.log(`Using base URL: ${process.env.OPENAI_BASEURL}`);
+  if (openaiConfig.baseURL.includes('deepseek')) {
+    type = 'deepseek';
+  }
+}
+
+// Initialize OpenAI client
+const openai = new OpenAI(openaiConfig);
 
 /**
  * Handles a prompt stream from the client and uses the OpenAI API to generate
@@ -22,81 +45,125 @@ app.use(express.json());
  * @param {Object} res - The Express response object
  */
 const handlePromptStream = async (req, res) => {
-    const { messages } = req.body;
+  // Extract messages and UUID from request body
+  const { messages, uuid } = req.body;
 
-    if (!messages) {
-        return res.status(400).json({ message: 'Messages is required' });
-    }
+  // Validate required parameters
+  if (!messages) {
+    return res.status(400).json({ message: "Messages is required" });
+  }
 
-    messages.unshift({ role: 'system', content: process.env.SYSTEM_PROMPT || "You are a helpful assistant." });
+  if (!uuid) {
+    return res.status(400).json({ message: "UUID is required" });
+  }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+  // Add system prompt at the beginning of the messages array
+  messages.unshift({
+    role: "system",
+    content: process.env.SYSTEM_PROMPT || "You are a helpful assistant.",
+  });
 
-    try {
-        const requestConfig = {
-            method: 'post',
-            url: 'https://api.openai.com/v1/chat/completions',
-            headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            data: {
-                model: process.env.OPENAI_MODEL || 'gpt-3.5-turbo',
-                messages: messages,
-                stream: true,
-            },
-            responseType: 'stream',
-        };
+  // Set headers for Server-Sent Events (SSE)
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
 
-        console.log("OpenAI Configuration", requestConfig)
-        console.log("Messages", messages);
+  try {
+    // Load available tools for OpenAI
+    const tools = loadTools();
+    console.log(`Loaded ${tools.length} tools for OpenAI`);
 
-        const response = await axios(requestConfig);
+    // Create streaming completion with OpenAI
+    const stream = await openai.chat.completions.create({
+      model: type === 'openai' ? (process.env.OPENAI_MODEL || "gpt-3.5-turbo") : "deepseek-chat",
+      messages: messages,
+      stream: true,
+      tools: tools,
+      store: true,
+      temperature: +process.env.OPENAI_TEMPERATURE || 0.0,
+      max_completion_tokens: +process.env.OPENAI_MAX_TOKENS || 100,
+    });
 
-        response.data.on('data', (chunk) => {
-            const lines = chunk.toString().split('\n').filter(line => line.trim() !== '');
-            for (const line of lines) {
-                if (line.startsWith('data: ')) {
-                    const data = line.replace('data: ', '');
-                    if (data === '[DONE]') {
-                        res.end();
-                        return;
-                    }
-                    try {
-                        const parsed = JSON.parse(data);
-                        const content = parsed.choices[0]?.delta?.content || '';
-                        if (content) {
-                            console.log('Sending chunk to client:', content);
-                            res.write(JSON.stringify({ type: 'text', content }));
-                        }
-                    } catch (error) {
-                        console.log(data);
-                        console.error('Error parsing OpenAI response:', error);
-                    }
-                }
+    // Variables to track content and function calls
+    let content = "";
+    let functionName = "";
+    let functionArgs = "";
+
+    // Process each chunk from the stream
+    for await (const chunk of stream) {
+      for (const choice of chunk.choices) {
+        // Handle completion of the response
+        if (choice.finish_reason === "stop") {
+          console.log(`>> AI response: ${content}`);
+          res.write(JSON.stringify({ type: 'text', content: content }));
+        }
+
+        // Handle tool calls from the AI
+        if (choice.finish_reason === "tool_calls") {
+          console.log(`>> AI tool call: ${functionName}`);
+          console.log(`>> AI tool call args: ${functionArgs}`);
+          
+          // Get the appropriate handler for the tool
+          const handler = getToolHandler(functionName);
+          if (!handler) {
+            console.error(`No handler found for tool: ${functionName}`);
+            res.write(JSON.stringify({ 
+              type: 'text', 
+              content: `I'm sorry, I cannot retrieve the requested information.` 
+            }));
+            continue;
+          }
+          
+          try {
+            // Execute the tool handler with the provided arguments
+            const content = await handler(uuid, JSON.parse(functionArgs));
+            console.log(`>> Tool response: ${functionName} ->`, content);
+            res.write(JSON.stringify({ type: 'text', content }));
+          } catch (error) {
+            // Handle errors during tool execution
+            console.error(`Error executing tool ${functionName}:`, error);
+            res.write(JSON.stringify({ 
+              type: 'text', 
+              content: `I encountered an error while processing your request.` 
+            }));
+          }
+        }
+
+        // Process delta content from the stream
+        if (choice.delta) {
+          // Accumulate text content
+          if (choice.delta.content) {
+            content += choice.delta.content;
+          }
+
+          // Process tool calls
+          if (choice.delta.tool_calls) {
+            for (const toolCall of choice.delta.tool_calls) {
+              if (toolCall.type === "function") {
+                functionName = toolCall.function.name;
+              } else {
+                functionArgs += toolCall.function.arguments;
+              }
             }
-        });
-
-        response.data.on('end', () => {
-            console.log('Streaming complete');
-            res.end();
-        });
-
-        response.data.on('error', (err) => {
-            console.error('Error during OpenAI streaming:', err);
-            res.status(500).send('Error during OpenAI streaming');
-        });
-    } catch (error) {
-        console.error('Error calling OpenAI API:', error.message);
-        res.status(500).json({ message: 'Error communicating with OpenAI' });
+          }
+        }
+      }
     }
-}
 
-app.post('/prompt-stream', handlePromptStream);
+    // End the response stream
+    res.end();
+  } catch (error) {
+    // Handle errors during OpenAI API calls
+    console.error("Error calling OpenAI API:", error.message);
+    res.status(500).json({ message: "Error communicating with OpenAI" });
+  }
+};
 
+// Define API endpoint for prompt streaming
+app.post("/prompt-stream", handlePromptStream);
+
+// Start the server
 const port = process.env.PORT || 6002;
 app.listen(port, () => {
-    console.log(`OpenAI listening on port ${port}`);
+  console.log(`OpenAI service listening on port ${port}`);
 });
