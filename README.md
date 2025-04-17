@@ -127,7 +127,6 @@ To add custom tools to the application:
 
 1. Create a new tool definition in the `tools` directory
 2. Implement the corresponding handler function
-3. Register the tool in the `loadTools()` function
 
 ## Error Handling
 
@@ -137,3 +136,21 @@ The application includes comprehensive error handling for:
 - Tool execution errors
 
 All errors are logged to the console and appropriate error messages are returned to the client.
+
+## Support & Community
+
+*   **GitHub:** [https://github.com/agentvoiceresponse](https://github.com/agentvoiceresponse) - Report issues, contribute code.
+*   **Discord:** [https://discord.gg/DFTU69Hg74](https://discord.gg/DFTU69Hg74) - Join the community discussion.
+*   **Docker Hub:** [https://hub.docker.com/u/agentvoiceresponse](https://hub.docker.com/u/agentvoiceresponse) - Find Docker images.
+*   **Wiki:** [https://wiki.agentvoiceresponse.com/en/home](https://wiki.agentvoiceresponse.com/en/home) - Project documentation and guides.
+
+
+## Support AVR
+
+AVR is free and open-source. If you find it valuable, consider supporting its development:
+
+<a href="https://ko-fi.com/gcareri" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support us on Ko-fi"></a>
+
+## License
+
+MIT License - see the [LICENSE](LICENSE.md) file for details.
