@@ -3,7 +3,7 @@
 [![Discord](https://img.shields.io/discord/1347239846632226998?label=Discord&logo=discord)](https://discord.gg/DFTU69Hg74)
 [![GitHub Repo stars](https://img.shields.io/github/stars/agentvoiceresponse/avr-llm-openai?style=social)](https://github.com/agentvoiceresponse/avr-llm-openai)
 [![Docker Pulls](https://img.shields.io/docker/pulls/agentvoiceresponse/avr-llm-openai?label=Docker%20Pulls&logo=docker)](https://hub.docker.com/r/agentvoiceresponse/avr-llm-openai)
-[![Ko-fi](https://img.shields.io/badge/Support%20us%20on-Ko--fi-ff5e5b.svg)](https://ko-fi.com/gcareri)
+[![Ko-fi](https://img.shields.io/badge/Support%20us%20on-Ko--fi-ff5e5b.svg)](https://ko-fi.com/agentvoiceresponse)
 
 This repository showcases the integration between **Agent Voice Response** and **OpenAI**. The application leverages OpenAI's powerful language model to process text input from users, providing intelligent, context-aware responses that enhance the virtual agent's capabilities.
 
