@@ -149,7 +149,7 @@ All errors are logged to the console and appropriate error messages are returned
 
 AVR is free and open-source. If you find it valuable, consider supporting its development:
 
-<a href="https://ko-fi.com/gcareri" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support us on Ko-fi"></a>
+<a href="https://ko-fi.com/agentvoiceresponse" target="_blank"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support us on Ko-fi"></a>
 
 ## License
 
