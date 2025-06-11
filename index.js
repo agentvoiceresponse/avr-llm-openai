@@ -69,20 +69,28 @@ const handlePromptStream = async (req, res) => {
   res.setHeader("Connection", "keep-alive");
 
   try {
-    // Load available tools for OpenAI
-    const tools = loadTools();
-    console.log(`Loaded ${tools.length} tools for OpenAI`);
-
-    // Create streaming completion with OpenAI
-    const stream = await openai.chat.completions.create({
+  
+    const obj = {
       model: type === 'openai' ? (process.env.OPENAI_MODEL || "gpt-3.5-turbo") : "deepseek-chat",
       messages: messages,
       stream: true,
-      tools: tools,
       store: true,
       temperature: +process.env.OPENAI_TEMPERATURE || 0.0,
       max_completion_tokens: +process.env.OPENAI_MAX_TOKENS || 100,
-    });
+    }
+
+    if (!process.env.OPENAI_BASEURL) {
+      // Load available tools for OpenAI
+      try {
+        obj.tools = loadTools();
+        console.log(`Loaded ${obj.tools.length} tools for OpenAI`);
+      } catch (error) {
+        console.error(`Error loading tools for OpenAI: ${error.message}`);
+      }
+    }
+
+    // Create streaming completion with OpenAI
+    const stream = await openai.chat.completions.create(obj);
 
     // Variables to track content and function calls
     let functionName = "";
@@ -91,6 +99,7 @@ const handlePromptStream = async (req, res) => {
     // Process each chunk from the stream
     for await (const chunk of stream) {
       for (const choice of chunk.choices) {
+        // console.log(`>> Choice: ${JSON.stringify(choice)}`);
         // Handle completion of the response
         if (choice.finish_reason === "stop") {
             console.log("Ending response stream");
