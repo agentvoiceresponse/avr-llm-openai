@@ -98,6 +98,10 @@ const handlePromptStream = async (req, res) => {
 
     // Process each chunk from the stream
     for await (const chunk of stream) {
+      if (!chunk.choices) {
+        console.warn("Non-standard chunk:", chunk);
+        continue;
+      }
       for (const choice of chunk.choices) {
         // console.log(`>> Choice: ${JSON.stringify(choice)}`);
         // Handle completion of the response
